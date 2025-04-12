@@ -14,7 +14,7 @@ fun main(args: Array<String>) {
         0 -> runPrompt()
         1 -> runFile(args[0])
         else -> {
-            println("Usage: klox [script]")
+            System.err.println("Usage: klox [script]")
             exitProcess(64)
         }
     }
@@ -45,10 +45,13 @@ private fun runPrompt() {
 private fun runKlox(source: String) {
     val scanner = Scanner(source)
     val tokens = scanner.scanTokens()
+    val parser = Parser(tokens)
+    val expression = parser.parse()
 
-    for (token in tokens) {
-        println(token)
-    }
+    // stop if there was a syntax error.
+    if (hadError || expression == null) return
+
+    println(AstPrinter().print(expression))
 }
 
 fun error(line: UInt, message: String) {
@@ -62,4 +65,12 @@ private fun report(line: UInt, where: String, message: String) {
         "[line $line] Error$where: $message"
     )
     hadError = true
+}
+
+fun error(token: Token, message: String) {
+    if (token.type == TokenType.EOF) {
+        report(token.line, " at end", message)
+    } else {
+        report(token.line, " at '${token.lexeme}'", message)
+    }
 }

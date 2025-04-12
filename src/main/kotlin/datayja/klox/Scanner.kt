@@ -57,6 +57,7 @@ class Scanner(
 
             else -> {
                 if (isDigit(c)) number()
+                else if (isAlpha(c)) identifier()
                 else error(line, "Unexpected character: $c")
             }
         }
@@ -120,6 +121,17 @@ class Scanner(
         return (c in '0'..'9')
     }
 
+    private fun isAlpha(c: Char): Boolean {
+        return (
+            (c in 'a'..'z') ||
+            (c in 'A'..'Z') ||
+             c == '_')
+    }
+
+    private fun isAlphaNumeric(c: Char): Boolean {
+        return isAlpha(c) || isDigit(c)
+    }
+
     private fun number() {
         while (isDigit(peek())) advance()
 
@@ -133,11 +145,41 @@ class Scanner(
         addToken(TokenType.NUMBER, source.substring(start, current).toDouble())
     }
 
+    private fun identifier() {
+        while (isAlphaNumeric(peek())) advance()
+
+        val text = source.substring(start, current)
+        var type = keywords[text]
+        if (type == null) type = TokenType.IDENTIFIER
+        addToken(type)
+    }
+
     private operator fun String.get(at: UInt): Char {
         return this[at.toInt()]
     }
 
     private fun String.substring(startIndex: UInt, endIndex: UInt): String {
         return source.substring(startIndex.toInt(), endIndex.toInt())
+    }
+
+    companion object {
+        private val keywords = buildMap<String, TokenType> {
+            put("and", TokenType.AND)
+            put("class", TokenType.CLASS)
+            put("else", TokenType.ELSE)
+            put("false", TokenType.FALSE)
+            put("for", TokenType.FOR)
+            put("fun", TokenType.FUN)
+            put("if", TokenType.IF)
+            put("nil", TokenType.NIL)
+            put("or", TokenType.OR)
+            put("print", TokenType.PRINT)
+            put("return", TokenType.RETURN)
+            put("super", TokenType.SUPER)
+            put("this", TokenType.THIS)
+            put("true", TokenType.TRUE)
+            put("var", TokenType.VAR)
+            put("while", TokenType.WHILE)
+        }
     }
 }
