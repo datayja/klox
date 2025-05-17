@@ -10,6 +10,10 @@ repositories {
 }
 
 dependencies {
+    implementation(platform(libs.arrow.bom))
+    implementation(libs.arrow.core)
+    implementation(libs.arrow.fx.coroutines)
+
     testImplementation(kotlin("test"))
 }
 

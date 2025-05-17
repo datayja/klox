@@ -1,5 +1,7 @@
 package datayja.klox
 
+import arrow.core.raise.nullable
+
 class Interpreter : Expr.Visitor<Any?> {
 
     override fun visitLiteralExpr(expr: Expr.Literal): Any? {
@@ -33,6 +35,92 @@ class Interpreter : Expr.Visitor<Any?> {
     }
 
     override fun visitBinaryExpr(expr: Expr.Binary): Any? {
-        TODO("Not yet implemented")
+        return when (expr.operator.type) {
+            TokenType.LEFT_PAREN -> TODO()
+            TokenType.RIGHT_PAREN -> TODO()
+            TokenType.LEFT_BRACE -> TODO()
+            TokenType.RIGHT_BRACE -> TODO()
+            TokenType.COMMA -> TODO()
+            TokenType.DOT -> TODO()
+            TokenType.MINUS -> nullable {
+                val left = (evaluate(expr.left) as? Double).bind()
+                val right = (evaluate(expr.right) as? Double).bind()
+                (left - right)
+            }
+            TokenType.PLUS -> nullable {
+                val left = evaluate(expr.left).bind()
+                val right = evaluate(expr.right).bind()
+                if (left is Double && right is Double) {
+                    (left + right)
+                } else {
+                    (left.toString() + right.toString())
+                }
+            }
+            TokenType.SEMICOLON -> TODO()
+            TokenType.SLASH -> nullable {
+                val left = (evaluate(expr.left) as? Double).bind()
+                val right = (evaluate(expr.right) as? Double).bind()
+                (left / right)
+            }
+            TokenType.STAR -> nullable {
+                val left = (evaluate(expr.left) as? Double).bind()
+                val right = (evaluate(expr.right) as? Double).bind()
+                (left * right)
+            }
+            TokenType.BANG -> TODO()
+            TokenType.BANG_EQUAL -> nullable {
+                val left = evaluate(expr.left).bind()
+                val right = evaluate(expr.right).bind()
+                // Kotlin already has the right semantics for [!=]
+                (left != right)
+            }
+            TokenType.EQUAL -> TODO()
+            TokenType.EQUAL_EQUAL -> nullable {
+                val left = evaluate(expr.left).bind()
+                val right = evaluate(expr.right).bind()
+                // Kotlin already has the right semantics for [==]
+                (left == right)
+            }
+            TokenType.GREATER -> nullable {
+                val left = (evaluate(expr.left) as? Double).bind()
+                val right = (evaluate(expr.right) as? Double).bind()
+                (left > right)
+            }
+            TokenType.GREATER_EQUAL -> nullable {
+                val left = (evaluate(expr.left) as? Double).bind()
+                val right = (evaluate(expr.right) as? Double).bind()
+                (left >= right)
+            }
+            TokenType.LESS -> nullable {
+                val left = (evaluate(expr.left) as? Double).bind()
+                val right = (evaluate(expr.right) as? Double).bind()
+                (left < right)
+            }
+            TokenType.LESS_EQUAL -> nullable {
+                val left = (evaluate(expr.left) as? Double).bind()
+                val right = (evaluate(expr.right) as? Double).bind()
+                (left <= right)
+            }
+            TokenType.IDENTIFIER -> TODO()
+            TokenType.STRING -> TODO()
+            TokenType.NUMBER -> TODO()
+            TokenType.AND -> TODO()
+            TokenType.CLASS -> TODO()
+            TokenType.ELSE -> TODO()
+            TokenType.FALSE -> TODO()
+            TokenType.FUN -> TODO()
+            TokenType.FOR -> TODO()
+            TokenType.IF -> TODO()
+            TokenType.NIL -> TODO()
+            TokenType.OR -> TODO()
+            TokenType.PRINT -> TODO()
+            TokenType.RETURN -> TODO()
+            TokenType.SUPER -> TODO()
+            TokenType.THIS -> TODO()
+            TokenType.TRUE -> TODO()
+            TokenType.VAR -> TODO()
+            TokenType.WHILE -> TODO()
+            TokenType.EOF -> TODO()
+        }
     }
 }
