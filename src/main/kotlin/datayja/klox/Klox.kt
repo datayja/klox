@@ -8,6 +8,8 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
 
+private val interpreter: Interpreter = Interpreter()
+
 @Throws(IOException::class)
 fun main(args: Array<String>) {
     when (args.size) {
@@ -51,7 +53,8 @@ private fun runKlox(source: String) {
     // stop if there was a syntax error.
     if (hadError || expression == null) return
 
-    println(AstPrinter().print(expression))
+    //println(AstPrinter().print(expression))
+    interpreter.interpret(expression)
 }
 
 fun error(line: UInt, message: String) {

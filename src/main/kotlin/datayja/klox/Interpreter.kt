@@ -4,6 +4,24 @@ import arrow.core.raise.nullable
 
 class Interpreter : Expr.Visitor<Any?> {
 
+    fun interpret(expr: Expr) {
+        try {
+            val value = evaluate(expr)
+            println(value.stringify())
+        } catch (error: Throwable) {
+            System.err.println(error)
+            error.printStackTrace(System.err)
+        }
+    }
+
+    private fun Any?.stringify(): String {
+        return when (this) {
+            null -> "nil"
+            is Double -> this.toString().removeSuffix(".0")
+            else -> this.toString()
+        }
+    }
+
     override fun visitLiteralExpr(expr: Expr.Literal): Any? {
         return expr.value
     }
@@ -59,7 +77,7 @@ class Interpreter : Expr.Visitor<Any?> {
             TokenType.SEMICOLON -> TODO()
             TokenType.SLASH -> nullable {
                 val left = (evaluate(expr.left) as? Double).bind()
-                val right = (evaluate(expr.right) as? Double).bind()
+                val right = (evaluate(expr.right) as? Double)?.takeIf { it != 0.0 }.bind()
                 (left / right)
             }
             TokenType.STAR -> nullable {
@@ -68,16 +86,16 @@ class Interpreter : Expr.Visitor<Any?> {
                 (left * right)
             }
             TokenType.BANG -> TODO()
-            TokenType.BANG_EQUAL -> nullable {
-                val left = evaluate(expr.left).bind()
-                val right = evaluate(expr.right).bind()
+            TokenType.BANG_EQUAL -> {
+                val left = evaluate(expr.left)
+                val right = evaluate(expr.right)
                 // Kotlin already has the right semantics for [!=]
                 (left != right)
             }
             TokenType.EQUAL -> TODO()
-            TokenType.EQUAL_EQUAL -> nullable {
-                val left = evaluate(expr.left).bind()
-                val right = evaluate(expr.right).bind()
+            TokenType.EQUAL_EQUAL -> {
+                val left = evaluate(expr.left)
+                val right = evaluate(expr.right)
                 // Kotlin already has the right semantics for [==]
                 (left == right)
             }
