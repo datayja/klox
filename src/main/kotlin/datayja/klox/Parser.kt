@@ -1,5 +1,7 @@
 package datayja.klox
 
+import java.io.Serial
+
 class Parser(
     private val tokens: List<Token>,
 ) {
@@ -48,6 +50,7 @@ class Parser(
 
     private fun statement(): Stmt {
         return if (match(TokenType.PRINT)) printStatement()
+        else if (match(TokenType.LEFT_BRACE)) Stmt.Block(block())
         else expressionStatement()
     }
 
@@ -61,6 +64,34 @@ class Parser(
         val expr = expression();
         consume(TokenType.SEMICOLON, "Expect ';' after expression.")
         return Stmt.Expression(expr)
+    }
+
+    private fun block(): List<Stmt> {
+        val statements = mutableListOf<Stmt>()
+
+        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            declaration()?.let(statements::add)
+        }
+
+        return statements.toList()
+    }
+
+    private fun assigment(): Expr {
+        val expr = equality()
+
+        if (match(TokenType.EQUAL)) {
+            val equals = previous()
+            val value = assigment()
+
+            if (expr is Expr.Variable) {
+                val name = expr.name
+                return Expr.Assign(name, value)
+            }
+
+            error(equals, "Invalid assignment target.")
+        }
+
+        return expr
     }
 
     private fun equality(): Expr {
@@ -147,7 +178,7 @@ class Parser(
     }
 
     private fun error(token: Token, message: String): ParseError {
-        error(token, message)
+        Klox.error(token, message)
         return ParseError()
     }
 
@@ -209,5 +240,10 @@ class Parser(
         return tokens[current - 1]
     }
 
-    private class ParseError : RuntimeException()
+    private class ParseError : RuntimeException() {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = -7119497784409697344L
+        }
+    }
 }

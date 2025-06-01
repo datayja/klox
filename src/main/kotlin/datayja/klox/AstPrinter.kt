@@ -7,6 +7,13 @@ class AstPrinter : Expr.Visitor<String> {
         return expr.accept(this)
     }
 
+    override fun visitAssignExpr(expr: Expr.Assign): String {
+        return parenthesize(
+            name = "assign to '${expr.name}'",
+            expr.value,
+        )
+    }
+
     override fun visitBinaryExpr(expr: Expr.Binary): String {
         return parenthesize(
             name = expr.operator.lexeme,

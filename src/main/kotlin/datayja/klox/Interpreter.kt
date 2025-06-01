@@ -4,7 +4,7 @@ import arrow.core.raise.nullable
 
 class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
-    private val environment: Environment = Environment()
+    private var environment: Environment = Environment()
 
     fun interpret(statements: List<Stmt>) {
         try {
@@ -61,6 +61,23 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     private fun execute(stmt: Stmt) {
         stmt.accept(this)
+    }
+
+    override fun visitBlockStmt(stmt: Stmt.Block) {
+        executeBlock(stmt.statements, Environment(environment))
+    }
+
+    internal fun executeBlock(statements: List<Stmt>, environment: Environment) {
+        val previous = this.environment
+        try {
+            this.environment = environment
+
+            statements.forEach { statement ->
+                execute(statement)
+            }
+        } finally {
+            this.environment = previous
+        }
     }
 
     override fun visitBinaryExpr(expr: Expr.Binary): Any? {
@@ -166,5 +183,11 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         val value = stmt.initializer?.let(::evaluate)
 
         environment.define(stmt.name.lexeme, value)
+    }
+
+    override fun visitAssignExpr(expr: Expr.Assign): Any? {
+        val value = evaluate(expr.value)
+        environment.assign(expr.name, value)
+        return value
     }
 }

@@ -1,6 +1,8 @@
 package datayja.klox
 
-class Environment {
+class Environment(
+    val enclosing: Environment? = null,
+) {
 
     private val values: MutableMap<String, Any?> = mutableMapOf()
 
@@ -14,6 +16,20 @@ class Environment {
         return synchronized(values) {
             if (values.containsKey(name.lexeme)) {
                 values[name.lexeme]
+            } else if (enclosing != null) {
+                enclosing[name]
+            } else {
+                throw RuntimeException("Undefined variable '${name.lexeme}'.")
+            }
+        }
+    }
+
+    internal fun assign(name: Token, value: Any?) {
+        return synchronized(values) {
+            if (values.containsKey(name.lexeme)) {
+                values[name.lexeme] = value
+            } else if (enclosing != null) {
+                enclosing.assign(name, value)
             } else {
                 throw RuntimeException("Undefined variable '${name.lexeme}'.")
             }

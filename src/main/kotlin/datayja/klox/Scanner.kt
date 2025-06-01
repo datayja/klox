@@ -58,7 +58,7 @@ class Scanner(
             else -> {
                 if (isDigit(c)) number()
                 else if (isAlpha(c)) identifier()
-                else error(line, "Unexpected character: $c")
+                else Klox.error(line, "Unexpected character: $c")
             }
         }
     }
@@ -105,7 +105,7 @@ class Scanner(
         }
 
         if (isAtEnd()) {
-            error(line, "Unterminated string.")
+            Klox.error(line, "Unterminated string.")
             return
         }
 
