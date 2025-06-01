@@ -165,7 +165,9 @@ class Scanner(
     companion object {
         private val keywords = buildMap<String, TokenType> {
             put("and", TokenType.AND)
+            put("break", TokenType.BREAK)
             put("class", TokenType.CLASS)
+            put("continue", TokenType.CONTINUE)
             put("else", TokenType.ELSE)
             put("false", TokenType.FALSE)
             put("for", TokenType.FOR)

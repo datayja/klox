@@ -48,10 +48,37 @@ class Parser(
         return Stmt.Var(name, initializer)
     }
 
+    private fun whileStatement(): Stmt {
+        consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.")
+        val condition = expression()
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.")
+        val body = statement()
+
+        return Stmt.While(condition, body)
+    }
+
     private fun statement(): Stmt {
-        return if (match(TokenType.PRINT)) printStatement()
-        else if (match(TokenType.LEFT_BRACE)) Stmt.Block(block())
-        else expressionStatement()
+        return when {
+            match(TokenType.BREAK) -> Stmt.LoopControl(previous())
+            match(TokenType.CONTINUE) -> Stmt.LoopControl(previous())
+            match(TokenType.IF) -> ifStatement()
+            match(TokenType.PRINT) -> printStatement()
+            match(TokenType.WHILE) -> whileStatement()
+            match(TokenType.LEFT_BRACE) -> Stmt.Block(block())
+            else -> expressionStatement()
+        }
+    }
+
+    private fun ifStatement(): Stmt {
+        consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
+        val condition = expression()
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.")
+
+        val thenBranch = statement()
+        val elseBranch = if (match(TokenType.ELSE)) statement()
+        else Stmt.Block(emptyList())
+
+        return Stmt.If(condition, thenBranch, elseBranch)
     }
 
     private fun printStatement(): Stmt {
@@ -77,7 +104,7 @@ class Parser(
     }
 
     private fun assigment(): Expr {
-        val expr = equality()
+        val expr = or()
 
         if (match(TokenType.EQUAL)) {
             val equals = previous()
@@ -89,6 +116,30 @@ class Parser(
             }
 
             error(equals, "Invalid assignment target.")
+        }
+
+        return expr
+    }
+
+    private fun or(): Expr {
+        var expr = and()
+
+        while (match(TokenType.OR)) {
+            val operator = previous()
+            val right = and()
+            expr = Expr.Logical(expr, operator, right)
+        }
+
+        return expr
+    }
+
+    private fun and(): Expr {
+        var expr = equality()
+
+        while (match(TokenType.AND)) {
+            val operator = previous()
+            val right = equality()
+            expr = Expr.Logical(expr, operator, right)
         }
 
         return expr

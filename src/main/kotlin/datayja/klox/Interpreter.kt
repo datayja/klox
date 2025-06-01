@@ -1,10 +1,13 @@
 package datayja.klox
 
 import arrow.core.raise.nullable
+import java.io.Serial
 
 class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     private var environment: Environment = Environment()
+
+    private var isInLoop: Boolean = false
 
     fun interpret(statements: List<Stmt>) {
         try {
@@ -27,6 +30,16 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     override fun visitLiteralExpr(expr: Expr.Literal): Any? {
         return expr.value
+    }
+
+    override fun visitLogicalExpr(expr: Expr.Logical): Any? {
+        val left = evaluate(expr.left)
+
+        return when {
+            expr.operator.type == TokenType.OR && left.isTruthy() -> left
+            expr.operator.type == TokenType.AND && !left.isTruthy() -> left
+            else -> evaluate(expr.right)
+        }
     }
 
     override fun visitGroupingExpr(expr: Expr.Grouping): Any? {
@@ -74,6 +87,18 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
             statements.forEach { statement ->
                 execute(statement)
+            }
+        } catch (brk: Break) {
+            if (this.isInLoop) {
+                throw brk
+            } else {
+                throw RuntimeException("Unexpected break", brk)
+            }
+        } catch (cont: Continue) {
+            if (this.isInLoop) {
+                throw cont
+            } else {
+                throw RuntimeException("Unexpected continue", cont)
             }
         } finally {
             this.environment = previous
@@ -167,11 +192,21 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
             TokenType.VAR -> TODO()
             TokenType.WHILE -> TODO()
             TokenType.EOF -> TODO()
+            TokenType.BREAK -> TODO()
+            TokenType.CONTINUE -> TODO()
         }
     }
 
     override fun visitExpressionStmt(stmt: Stmt.Expression) {
         evaluate(stmt.expression)
+    }
+
+    override fun visitIfStmt(stmt: Stmt.If) {
+        if (evaluate(stmt.condition).isTruthy()) {
+            execute(stmt.thenBranch)
+        } else {
+            execute(stmt.elseBranch)
+        }
     }
 
     override fun visitPrintStmt(stmt: Stmt.Print) {
@@ -185,9 +220,49 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         environment.define(stmt.name.lexeme, value)
     }
 
+    override fun visitWhileStmt(stmt: Stmt.While) {
+        val previous = this.isInLoop
+        try {
+            this.isInLoop = true
+            while (evaluate(stmt.condition).isTruthy()) {
+                try {
+                    execute(stmt.body)
+                } catch (brk: Break) {
+                    break
+                } catch (cont: Continue) {
+                    continue
+                }
+            }
+        } finally {
+            this.isInLoop = previous
+        }
+    }
+
+    override fun visitLoopControlStmt(stmt: Stmt.LoopControl) {
+        when (stmt.type.type) {
+            TokenType.BREAK -> throw Break()
+            TokenType.CONTINUE -> throw Continue()
+            else -> throw RuntimeException("Illegal loop control $stmt")
+        }
+    }
+
     override fun visitAssignExpr(expr: Expr.Assign): Any? {
         val value = evaluate(expr.value)
         environment.assign(expr.name, value)
         return value
+    }
+
+    class Break : Throwable("break", null, true, false) {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = -4795569792694658446L
+        }
+    }
+
+    class Continue : Throwable("continue", null, true, false) {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = 8160767980093585358L
+        }
     }
 }
