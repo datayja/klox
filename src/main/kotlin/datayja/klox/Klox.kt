@@ -48,13 +48,13 @@ private fun runKlox(source: String) {
     val scanner = Scanner(source)
     val tokens = scanner.scanTokens()
     val parser = Parser(tokens)
-    val expression = parser.parse()
+    val statements = parser.parse()
 
     // stop if there was a syntax error.
-    if (hadError || expression == null) return
+    if (hadError || statements == null) return
 
     //println(AstPrinter().print(expression))
-    interpreter.interpret(expression)
+    interpreter.interpret(statements)
 }
 
 fun error(line: UInt, message: String) {

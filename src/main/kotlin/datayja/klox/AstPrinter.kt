@@ -36,6 +36,13 @@ class AstPrinter : Expr.Visitor<String> {
         )
     }
 
+    override fun visitVariableExpr(expr: Expr.Variable): String {
+        return parenthesize(
+            name = "variable",
+            expr
+        )
+    }
+
     private fun parenthesize(name: String, vararg exprs: Expr): String {
         return buildString {
             append("(")

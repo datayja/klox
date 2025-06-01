@@ -2,12 +2,15 @@ package datayja.klox
 
 import arrow.core.raise.nullable
 
-class Interpreter : Expr.Visitor<Any?> {
+class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
-    fun interpret(expr: Expr) {
+    private val environment: Environment = Environment()
+
+    fun interpret(statements: List<Stmt>) {
         try {
-            val value = evaluate(expr)
-            println(value.stringify())
+            statements.forEach { statement ->
+                execute(statement)
+            }
         } catch (error: Throwable) {
             System.err.println(error)
             error.printStackTrace(System.err)
@@ -40,6 +43,10 @@ class Interpreter : Expr.Visitor<Any?> {
         }
     }
 
+    override fun visitVariableExpr(expr: Expr.Variable): Any? {
+        return environment[expr.name]
+    }
+
     private fun Any?.isTruthy(): Boolean {
         return when (this) {
             null -> false
@@ -50,6 +57,10 @@ class Interpreter : Expr.Visitor<Any?> {
 
     private fun evaluate(expr: Expr): Any? {
         return expr.accept(this)
+    }
+
+    private fun execute(stmt: Stmt) {
+        stmt.accept(this)
     }
 
     override fun visitBinaryExpr(expr: Expr.Binary): Any? {
@@ -140,5 +151,20 @@ class Interpreter : Expr.Visitor<Any?> {
             TokenType.WHILE -> TODO()
             TokenType.EOF -> TODO()
         }
+    }
+
+    override fun visitExpressionStmt(stmt: Stmt.Expression) {
+        evaluate(stmt.expression)
+    }
+
+    override fun visitPrintStmt(stmt: Stmt.Print) {
+        val value = evaluate(stmt.expression)
+        println(value.stringify())
+    }
+
+    override fun visitVarStmt(stmt: Stmt.Var) {
+        val value = stmt.initializer?.let(::evaluate)
+
+        environment.define(stmt.name.lexeme, value)
     }
 }
