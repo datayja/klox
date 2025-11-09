@@ -8,6 +8,12 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
 
+
+@Throws(IOException::class)
+fun main(args: Array<String>) {
+    Klox.main(args)
+}
+
 object Klox {
 
     private val interpreter: Interpreter = Interpreter()
