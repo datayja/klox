@@ -22,7 +22,7 @@ class Parser(
     }
 
     private fun expression(): Expr {
-        return equality()
+        return assignment()
     }
 
     private fun declaration(): Stmt? {
@@ -61,12 +61,62 @@ class Parser(
         return when {
             match(TokenType.BREAK) -> Stmt.LoopControl(previous())
             match(TokenType.CONTINUE) -> Stmt.LoopControl(previous())
+            match(TokenType.FOR) -> forStatement()
             match(TokenType.IF) -> ifStatement()
             match(TokenType.PRINT) -> printStatement()
             match(TokenType.WHILE) -> whileStatement()
             match(TokenType.LEFT_BRACE) -> Stmt.Block(block())
             else -> expressionStatement()
         }
+    }
+
+    private fun forStatement(): Stmt {
+        consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.")
+
+        val initializer: Stmt? = when {
+            match(TokenType.SEMICOLON) -> null
+            match(TokenType.VAR) -> varDeclaration()
+            else -> expressionStatement()
+        }
+
+        val condition: Expr = when {
+            !check(TokenType.SEMICOLON) -> expression()
+            else -> Expr.Literal(true)
+        }
+        consume(TokenType.SEMICOLON, "Expect ';' after loop condition.")
+
+        val increment = when {
+            !check(TokenType.RIGHT_PAREN) -> expression()
+            else -> null
+        }
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses.")
+
+        var body: Stmt = statement()
+
+        if (increment != null) {
+            body = Stmt.Block(
+                listOf(
+                    body,
+                    Stmt.Expression(increment)
+                )
+            )
+        }
+
+        body = Stmt.While(
+            condition = condition,
+            body = body,
+        )
+
+        if (initializer != null) {
+            body = Stmt.Block(
+                listOf(
+                    initializer,
+                    body,
+                )
+            )
+        }
+
+        return body
     }
 
     private fun ifStatement(): Stmt {
@@ -100,15 +150,16 @@ class Parser(
             declaration()?.let(statements::add)
         }
 
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after block.")
         return statements.toList()
     }
 
-    private fun assigment(): Expr {
+    private fun assignment(): Expr {
         val expr = or()
 
         if (match(TokenType.EQUAL)) {
             val equals = previous()
-            val value = assigment()
+            val value = assignment()
 
             if (expr is Expr.Variable) {
                 val name = expr.name
