@@ -2,18 +2,37 @@ package datayja.klox
 
 import arrow.core.raise.nullable
 import java.io.Serial
+import java.time.Clock
+import java.time.Instant
 
 class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
-    private var environment: Environment = Environment()
+    val globals: Environment = Environment()
+    private var environment: Environment = globals
 
     private var isInLoop: Boolean = false
+
+    constructor() {
+        globals.define("clock", object : KloxCallable {
+            override val arity: Int
+                get() = 0
+
+            override fun call(
+                interpreter: Interpreter,
+                arguments: List<Any?>
+            ): Any = (Instant.now(Clock.systemDefaultZone()).toEpochMilli() / 1000.0)
+
+            override fun toString(): String = "<native fn>"
+        })
+    }
 
     fun interpret(statements: List<Stmt>) {
         try {
             statements.forEach { statement ->
                 execute(statement)
             }
+        } catch (error: RuntimeError) {
+            Klox.runtimeError(error)
         } catch (error: Throwable) {
             System.err.println(error)
             error.printStackTrace(System.err)
@@ -195,6 +214,22 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
             TokenType.BREAK -> TODO()
             TokenType.CONTINUE -> TODO()
         }
+    }
+
+    override fun visitCallExpr(expr: Expr.Call): Any? {
+        val callee = evaluate(expr.callee)
+
+        val arguments = expr.arguments.map(::evaluate)
+
+        if (callee !is KloxCallable) {
+            throw RuntimeError(expr.paren, "Can only call functions and classes, got $callee")
+        }
+
+        if (arguments.size != callee.arity) {
+            throw RuntimeError(expr.paren, "Expected ${callee.arity} arguments, but got ${arguments.size}")
+        }
+
+        return callee.call(this@Interpreter, arguments)
     }
 
     override fun visitExpressionStmt(stmt: Stmt.Expression) {

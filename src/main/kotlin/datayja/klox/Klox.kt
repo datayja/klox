@@ -85,4 +85,14 @@ object Klox {
             report(token.line, " at '${token.lexeme}'", message)
         }
     }
+
+    var hadRuntimeError: Boolean = false
+
+    fun runtimeError(error: RuntimeError) {
+        System.err.println(
+            error.message +
+                    "\n[line " + error.token.line + "]"
+        )
+        hadRuntimeError = true
+    }
 }
