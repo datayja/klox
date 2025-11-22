@@ -22,6 +22,10 @@ class AstPrinter : Expr.Visitor<String> {
         )
     }
 
+    override fun visitCallExpr(expr: Expr.Call): String {
+        TODO("Not yet implemented")
+    }
+
     override fun visitGroupingExpr(expr: Expr.Grouping): String {
         return parenthesize(
             name = "group",

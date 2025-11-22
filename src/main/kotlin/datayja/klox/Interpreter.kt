@@ -236,6 +236,11 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         evaluate(stmt.expression)
     }
 
+    override fun visitFunctionStmt(stmt: Stmt.Function) {
+        val function = KloxFunction(stmt)
+        environment.define(stmt.name.lexeme, function)
+    }
+
     override fun visitIfStmt(stmt: Stmt.If) {
         if (evaluate(stmt.condition).isTruthy()) {
             execute(stmt.thenBranch)
@@ -247,6 +252,14 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     override fun visitPrintStmt(stmt: Stmt.Print) {
         val value = evaluate(stmt.expression)
         println(value.stringify())
+    }
+
+    override fun visitReturnStmt(stmt: Stmt.Return) {
+        val value = nullable {
+            evaluate(stmt.value.bind())
+        }
+
+        throw Return(value)
     }
 
     override fun visitVarStmt(stmt: Stmt.Var) {
@@ -298,6 +311,13 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         companion object {
             @Serial
             private const val serialVersionUID: Long = 8160767980093585358L
+        }
+    }
+
+    class Return(val value: Any?) : Throwable("return", null, true, false) {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = -1373715850196995391L
         }
     }
 }
