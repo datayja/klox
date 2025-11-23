@@ -3,7 +3,8 @@ package datayja.klox
 import kotlin.math.min
 
 class KloxFunction(
-    val declaration: Stmt.Function,
+    private val declaration: Stmt.Function,
+    private val closure: Environment,
 ) : KloxCallable {
 
     override val arity: Int = declaration.params.size
@@ -14,7 +15,7 @@ class KloxFunction(
     ): Any? {
         require(arguments.size == arity)
 
-        val environment = Environment(interpreter.globals)
+        val environment = Environment(closure)
 
         for (i in 0..min(declaration.params.lastIndex, arguments.lastIndex)) {
             environment.define(

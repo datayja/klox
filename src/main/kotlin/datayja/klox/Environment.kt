@@ -19,7 +19,7 @@ class Environment(
             } else if (enclosing != null) {
                 enclosing[name]
             } else {
-                throw RuntimeException("Undefined variable '${name.lexeme}'.")
+                throw RuntimeError(name, "Undefined variable '${name.lexeme}'.")
             }
         }
     }
@@ -31,7 +31,7 @@ class Environment(
             } else if (enclosing != null) {
                 enclosing.assign(name, value)
             } else {
-                throw RuntimeException("Undefined variable '${name.lexeme}'.")
+                throw RuntimeError(name, "Undefined variable '${name.lexeme}'.")
             }
         }
     }

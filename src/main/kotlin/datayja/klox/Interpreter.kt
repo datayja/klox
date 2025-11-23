@@ -237,7 +237,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitFunctionStmt(stmt: Stmt.Function) {
-        val function = KloxFunction(stmt)
+        val function = KloxFunction(declaration = stmt, closure = environment)
         environment.define(stmt.name.lexeme, function)
     }
 
