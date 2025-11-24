@@ -129,8 +129,9 @@ class Parser(
         consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.")
 
         val thenBranch = statement()
-        val elseBranch = if (match(TokenType.ELSE)) statement()
-        else Stmt.Block(emptyList())
+        val elseBranch =
+            if (match(TokenType.ELSE)) statement()
+            else Stmt.Block(emptyList())
 
         return Stmt.If(condition, thenBranch, elseBranch)
     }

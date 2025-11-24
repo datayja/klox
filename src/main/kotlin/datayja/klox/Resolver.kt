@@ -1,45 +1,58 @@
 package datayja.klox
 
-import java.util.Deque
-import java.util.LinkedList
 import java.util.Stack
 
 class Resolver(
     private val interpreter: Interpreter,
 ) : Expr.Visitor<Unit>, Stmt.Visitor<Unit> {
 
-    private val scopes: Stack<MutableMap<String, Boolean>> = Stack()
-
-    private fun resolve(statements: List<Stmt>) {
-        statements.forEach(::resolve)
+    private enum class FunctionType {
+        None, Function
     }
 
+    private enum class LoopType {
+        None, While
+    }
+
+    private val scopes: Stack<MutableMap<String, Boolean>> = Stack()
+
+    private var currentFunction: FunctionType = FunctionType.None
+
+    private var currentLoop: LoopType = LoopType.None
+
     override fun visitAssignExpr(expr: Expr.Assign) {
-        TODO("Not yet implemented")
+        resolve(expr.value)
+        resolveLocal(expr, expr.name)
     }
 
     override fun visitBinaryExpr(expr: Expr.Binary) {
-        TODO("Not yet implemented")
+        resolve(expr.left)
+        resolve(expr.right)
     }
 
     override fun visitCallExpr(expr: Expr.Call) {
-        TODO("Not yet implemented")
+        resolve(expr.callee)
+
+        for (argument in expr.arguments) {
+            resolve(argument)
+        }
     }
 
     override fun visitGroupingExpr(expr: Expr.Grouping) {
-        TODO("Not yet implemented")
+        resolve(expr.expression)
     }
 
     override fun visitLiteralExpr(expr: Expr.Literal) {
-        TODO("Not yet implemented")
+        /* no-op */
     }
 
     override fun visitLogicalExpr(expr: Expr.Logical) {
-        TODO("Not yet implemented")
+        resolve(expr.left)
+        resolve(expr.right)
     }
 
     override fun visitUnaryExpr(expr: Expr.Unary) {
-        TODO("Not yet implemented")
+        resolve(expr.right)
     }
 
     override fun visitVariableExpr(expr: Expr.Variable) {
@@ -54,6 +67,65 @@ class Resolver(
         beginScope()
         resolve(stmt.statements)
         endScope()
+    }
+
+    override fun visitExpressionStmt(stmt: Stmt.Expression) {
+        resolve(stmt.expression)
+    }
+
+    override fun visitFunctionStmt(stmt: Stmt.Function) {
+        declare(stmt.name)
+        define(stmt.name)
+
+        resolveFunction(stmt, FunctionType.Function)
+    }
+
+    override fun visitIfStmt(stmt: Stmt.If) {
+        resolve(stmt.condition)
+        resolve(stmt.thenBranch)
+        resolve(stmt.elseBranch)
+    }
+
+    override fun visitLoopControlStmt(stmt: Stmt.LoopControl) {
+        if (currentLoop == LoopType.None) {
+            Klox.error(stmt.type, "Can't ${stmt.type.lexeme} from outside of a loop.")
+        }
+    }
+
+    override fun visitPrintStmt(stmt: Stmt.Print) {
+        resolve(stmt.expression)
+    }
+
+    override fun visitReturnStmt(stmt: Stmt.Return) {
+        if (currentFunction == FunctionType.None) {
+            Klox.error(stmt.keyword, "Can't return from top-level code.")
+        }
+
+        if (stmt.value != null) {
+            resolve(stmt.value)
+        }
+    }
+
+    override fun visitVarStmt(stmt: Stmt.Var) {
+        declare(stmt.name)
+        if (stmt.initializer != null) {
+            resolve(stmt.initializer)
+        }
+        define(stmt.name)
+    }
+
+    override fun visitWhileStmt(stmt: Stmt.While) {
+        val enclosingLoop = currentLoop
+        currentLoop = LoopType.While
+
+        resolve(stmt.condition)
+        resolve(stmt.body)
+
+        currentLoop = enclosingLoop
+    }
+
+    internal fun resolve(statements: List<Stmt>) {
+        statements.forEach(::resolve)
     }
 
     private fun resolve(stmt: Stmt) {
@@ -76,6 +148,11 @@ class Resolver(
         if (scopes.isEmpty()) return
 
         val scope = scopes.peek()
+
+        if (scope.containsKey(name.lexeme)) {
+            Klox.error(name, "Already a variable with this name is in this scope.")
+        }
+
         scope[name.lexeme] = false
     }
 
@@ -87,7 +164,7 @@ class Resolver(
     }
 
     private fun resolveLocal(expr: Expr, name: Token) {
-        for (i in (scopes.size - 1) downTo 0) {
+        for (i in scopes.lastIndex downTo 0) {
             if (scopes[i].containsKey(name.lexeme)) {
                 interpreter.resolve(expr, scopes.size - 1 - i)
                 return
@@ -95,39 +172,19 @@ class Resolver(
         }
     }
 
-    override fun visitExpressionStmt(stmt: Stmt.Expression) {
-        TODO("Not yet implemented")
-    }
+    private fun resolveFunction(function: Stmt.Function, type: FunctionType) {
+        val enclosingFunction = currentFunction
+        currentFunction = type
 
-    override fun visitFunctionStmt(stmt: Stmt.Function) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitIfStmt(stmt: Stmt.If) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitLoopControlStmt(stmt: Stmt.LoopControl) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitPrintStmt(stmt: Stmt.Print) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitReturnStmt(stmt: Stmt.Return) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitVarStmt(stmt: Stmt.Var) {
-        declare(stmt.name)
-        if (stmt.initializer != null) {
-            resolve(stmt.initializer)
+        beginScope()
+        for (param in function.params) {
+            declare(param)
+            define(param)
         }
-        define(stmt.name)
+        resolve(function.body)
+        endScope()
+
+        currentFunction = enclosingFunction
     }
 
-    override fun visitWhileStmt(stmt: Stmt.While) {
-        TODO("Not yet implemented")
-    }
 }

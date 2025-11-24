@@ -62,6 +62,12 @@ object Klox {
         if (hadError || statements == null) return
 
         //println(AstPrinter().print(expression))
+
+        val resolver = Resolver(interpreter)
+        resolver.resolve(statements)
+
+        if (hadError) return
+
         interpreter.interpret(statements)
     }
 

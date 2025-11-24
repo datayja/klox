@@ -10,6 +10,8 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     val globals: Environment = Environment()
     private var environment: Environment = globals
 
+    private val locals: MutableMap<Expr, Int> = mutableMapOf()
+
     private var isInLoop: Boolean = false
 
     constructor() {
@@ -76,7 +78,16 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitVariableExpr(expr: Expr.Variable): Any? {
-        return environment[expr.name]
+        return lookUpVariable(expr.name, expr)
+    }
+
+    private fun lookUpVariable(name: Token, expr: Expr): Any?  {
+        val distance = locals[expr]
+        return if (distance != null) {
+            environment.getAt(distance, name.lexeme)
+        } else {
+            globals[name]
+        }
     }
 
     private fun Any?.isTruthy(): Boolean {
@@ -93,6 +104,10 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     private fun execute(stmt: Stmt) {
         stmt.accept(this)
+    }
+
+    fun resolve(expr: Expr, depth: Int) {
+        locals.put(expr, depth)
     }
 
     override fun visitBlockStmt(stmt: Stmt.Block) {
@@ -296,7 +311,14 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     override fun visitAssignExpr(expr: Expr.Assign): Any? {
         val value = evaluate(expr.value)
-        environment.assign(expr.name, value)
+
+        val distance = locals[expr]
+        if (distance != null) {
+            environment.assignAt(distance, expr.name, value)
+        } else {
+            globals.assign(expr.name, value)
+        }
+
         return value
     }
 
