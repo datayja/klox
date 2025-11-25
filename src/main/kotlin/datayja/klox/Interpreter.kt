@@ -63,6 +63,19 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         }
     }
 
+    override fun visitSetExpr(expr: Expr.Set): Any? {
+        val destination = evaluate(expr.destination)
+
+        if (destination !is KloxInstance) {
+            throw RuntimeError(expr.name, "Only instances have fields.")
+        }
+
+        val value = evaluate(expr.value)
+        destination[expr.name] = value
+
+        return value
+    }
+
     override fun visitGroupingExpr(expr: Expr.Grouping): Any? {
         return evaluate(expr.expression)
     }
@@ -112,6 +125,12 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     override fun visitBlockStmt(stmt: Stmt.Block) {
         executeBlock(stmt.statements, Environment(environment))
+    }
+
+    override fun visitClassStmt(stmt: Stmt.Class) {
+        environment.define(stmt.name.lexeme, null)
+        val kloxClass = KloxClass(stmt.name.lexeme)
+        environment.assign(stmt.name, kloxClass)
     }
 
     internal fun executeBlock(statements: List<Stmt>, environment: Environment) {
@@ -245,6 +264,15 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         }
 
         return callee.call(this@Interpreter, arguments)
+    }
+
+    override fun visitGetExpr(expr: Expr.Get): Any? {
+        val source = evaluate(expr.source)
+        if (source is KloxInstance) {
+            return source[expr.name]
+        } else {
+            throw RuntimeError(expr.name, "Only instances have properties.")
+        }
     }
 
     override fun visitExpressionStmt(stmt: Stmt.Expression) {

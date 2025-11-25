@@ -28,6 +28,7 @@ class Parser(
     private fun declaration(): Stmt? {
         return try {
             when {
+                match(TokenType.CLASS) -> classDeclaration()
                 match(TokenType.FUN) -> function("function")
                 match(TokenType.VAR) -> varDeclaration()
                 else -> statement()
@@ -38,7 +39,22 @@ class Parser(
         }
     }
 
-    private fun varDeclaration(): Stmt {
+    private fun classDeclaration(): Stmt.Class {
+        val name = consume(TokenType.IDENTIFIER, "Expect class name.")
+        consume(TokenType.LEFT_BRACE, "Expect '{' before class body.")
+
+        val methods = buildList {
+            while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+                add(function("method"))
+            }
+        }
+
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
+
+        return Stmt.Class(name, methods)
+    }
+
+    private fun varDeclaration(): Stmt.Var {
         val name = consume(TokenType.IDENTIFIER, "Expect variable name.")
 
         val initializer = if (match(TokenType.EQUAL)) {
@@ -205,6 +221,8 @@ class Parser(
             if (expr is Expr.Variable) {
                 val name = expr.name
                 return Expr.Assign(name, value)
+            } else if (expr is Expr.Get) {
+                return Expr.Set(destination = expr.source, name = expr.name, value = value)
             }
 
             error(equals, "Invalid assignment target.")
@@ -299,10 +317,17 @@ class Parser(
         var expr: Expr = primary()
 
         while (true) {
-            if (match(TokenType.LEFT_PAREN)) {
-                expr = finishCall(callee = expr)
-            } else {
-                break
+            when {
+                match(TokenType.LEFT_PAREN) -> {
+                    expr = finishCall(callee = expr)
+                }
+                match(TokenType.DOT) -> {
+                    val name = consume(TokenType.IDENTIFIER, "Expect property name after '.'.")
+                    expr = Expr.Get(source = expr, name = name)
+                }
+                else -> {
+                    break
+                }
             }
         }
 
