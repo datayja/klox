@@ -7,11 +7,15 @@ class Resolver(
 ) : Expr.Visitor<Unit>, Stmt.Visitor<Unit> {
 
     private enum class FunctionType {
-        None, Function
+        None, Function, Method, Initializer
     }
 
     private enum class LoopType {
         None, While
+    }
+
+    private enum class ClassType {
+        None, Class
     }
 
     private val scopes: Stack<MutableMap<String, Boolean>> = Stack()
@@ -19,6 +23,8 @@ class Resolver(
     private var currentFunction: FunctionType = FunctionType.None
 
     private var currentLoop: LoopType = LoopType.None
+
+    private var currentClass: ClassType = ClassType.None
 
     override fun visitAssignExpr(expr: Expr.Assign) {
         resolve(expr.value)
@@ -60,6 +66,15 @@ class Resolver(
         resolve(expr.destination)
     }
 
+    override fun visitThisExpr(expr: Expr.This) {
+        if (currentClass == ClassType.None) {
+            Klox.error(expr.keyword, "Can't use 'this' outside of a class.")
+            return
+        }
+
+        resolveLocal(expr, expr.keyword)
+    }
+
     override fun visitUnaryExpr(expr: Expr.Unary) {
         resolve(expr.right)
     }
@@ -79,8 +94,26 @@ class Resolver(
     }
 
     override fun visitClassStmt(stmt: Stmt.Class) {
+        val enclosingClass = currentClass
+        currentClass = ClassType.Class
+
         declare(stmt.name)
         define(stmt.name)
+
+        beginScope()
+        scopes.peek()["this"] = true
+
+        for (method in stmt.methods) {
+            var declaration = FunctionType.Method
+            if (method.name.lexeme == "init") {
+                declaration = FunctionType.Initializer
+            }
+            resolveFunction(method, declaration)
+        }
+
+        endScope()
+
+        currentClass = enclosingClass
     }
 
     override fun visitExpressionStmt(stmt: Stmt.Expression) {
@@ -116,6 +149,10 @@ class Resolver(
         }
 
         if (stmt.value != null) {
+            if (currentFunction == FunctionType.Initializer) {
+                Klox.error(stmt.keyword, "Can't return a value from an initializer.")
+            }
+
             resolve(stmt.value)
         }
     }

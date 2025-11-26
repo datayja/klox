@@ -5,6 +5,7 @@ import kotlin.math.min
 class KloxFunction(
     private val declaration: Stmt.Function,
     private val closure: Environment,
+    private val isInitializer: Boolean,
 ) : KloxCallable {
 
     override val arity: Int = declaration.params.size
@@ -26,9 +27,21 @@ class KloxFunction(
 
         return try {
             interpreter.executeBlock(declaration.body, environment)
-            null
+            if (isInitializer) {
+                closure.getAt(0, "this")
+            } else {
+                null
+            }
         } catch (returnValue: Interpreter.Return) {
-            returnValue.value
+            if (isInitializer) closure.getAt(0, "this")
+            else returnValue.value
+        }
+    }
+
+    fun bind(instance: KloxInstance): KloxFunction {
+        return Environment(closure).let { env ->
+            env.define("this", instance)
+            KloxFunction(declaration = declaration, closure = env, isInitializer = isInitializer)
         }
     }
 

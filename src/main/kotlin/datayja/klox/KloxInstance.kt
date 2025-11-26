@@ -7,10 +7,16 @@ class KloxInstance(
     private val fields: MutableMap<String, Any?> = mutableMapOf()
 
     operator fun get(name: Token): Any? {
-        if (fields.containsKey(name.lexeme)) {
-            return fields[name.lexeme]
-        } else {
-            throw RuntimeError(name, "Undefined property '$kloxClass.${name.lexeme}'.")
+        return when {
+            fields.containsKey(name.lexeme) -> {
+                fields[name.lexeme]
+            }
+            kloxClass.hasMethod(name.lexeme) -> {
+                kloxClass.findMethod(name.lexeme)!!.bind(this)
+            }
+            else -> {
+                throw RuntimeError(name, "Undefined property '$kloxClass.${name.lexeme}'.")
+            }
         }
     }
 

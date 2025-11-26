@@ -14,7 +14,7 @@ sealed class Stmt {
     fun visitWhileStmt(stmt: While): R
   }
 
-  data class Block(
+  class Block(
     val statements: List<Stmt>,
   ) : Stmt() {
     override fun <R> accept(visitor: Visitor<R>): R {
@@ -22,7 +22,7 @@ sealed class Stmt {
     }
   }
 
-  data class Class(
+  class Class(
     val name: Token,
     val methods: List<Stmt.Function>,
   ) : Stmt() {
@@ -31,7 +31,7 @@ sealed class Stmt {
     }
   }
 
-  data class Expression(
+  class Expression(
     val expression: Expr,
   ) : Stmt() {
     override fun <R> accept(visitor: Visitor<R>): R {
@@ -39,7 +39,7 @@ sealed class Stmt {
     }
   }
 
-  data class Function(
+  class Function(
     val name: Token,
     val params: List<Token>,
     val body: List<Stmt>,
@@ -49,7 +49,7 @@ sealed class Stmt {
     }
   }
 
-  data class If(
+  class If(
     val condition: Expr,
     val thenBranch: Stmt,
     val elseBranch: Stmt,
@@ -59,7 +59,7 @@ sealed class Stmt {
     }
   }
 
-  data class LoopControl(
+  class LoopControl(
     val type: Token,
   ) : Stmt() {
     override fun <R> accept(visitor: Visitor<R>): R {
@@ -67,7 +67,7 @@ sealed class Stmt {
     }
   }
 
-  data class Print(
+  class Print(
     val expression: Expr,
   ) : Stmt() {
     override fun <R> accept(visitor: Visitor<R>): R {
@@ -75,7 +75,7 @@ sealed class Stmt {
     }
   }
 
-  data class Return(
+  class Return(
     val keyword: Token,
     val value: Expr?,
   ) : Stmt() {
@@ -84,7 +84,7 @@ sealed class Stmt {
     }
   }
 
-  data class Var(
+  class Var(
     val name: Token,
     val initializer: Expr?,
   ) : Stmt() {
@@ -93,7 +93,7 @@ sealed class Stmt {
     }
   }
 
-  data class While(
+  class While(
     val condition: Expr,
     val body: Stmt,
   ) : Stmt() {

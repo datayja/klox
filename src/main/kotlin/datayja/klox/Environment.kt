@@ -22,7 +22,7 @@ class Environment(
 
     internal fun ancestor(distance: Int): Environment {
         var environment: Environment = this
-        repeat(distance - 1) {
+        repeat(distance) {
             environment = environment.enclosing!!
         }
 

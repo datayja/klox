@@ -10,11 +10,12 @@ sealed class Expr {
     fun visitLiteralExpr(expr: Literal): R
     fun visitLogicalExpr(expr: Logical): R
     fun visitSetExpr(expr: Set): R
+    fun visitThisExpr(expr: This): R
     fun visitUnaryExpr(expr: Unary): R
     fun visitVariableExpr(expr: Variable): R
   }
 
-  data class Assign(
+  class Assign(
     val name: Token,
     val value: Expr,
   ) : Expr() {
@@ -23,7 +24,7 @@ sealed class Expr {
     }
   }
 
-  data class Binary(
+  class Binary(
     val left: Expr,
     val operator: Token,
     val right: Expr,
@@ -33,7 +34,7 @@ sealed class Expr {
     }
   }
 
-  data class Call(
+  class Call(
     val callee: Expr,
     val paren: Token,
     val arguments: List<Expr>,
@@ -43,7 +44,7 @@ sealed class Expr {
     }
   }
 
-  data class Get(
+  class Get(
     val source: Expr,
     val name: Token,
   ) : Expr() {
@@ -52,7 +53,7 @@ sealed class Expr {
     }
   }
 
-  data class Grouping(
+  class Grouping(
     val expression: Expr,
   ) : Expr() {
     override fun <R> accept(visitor: Visitor<R>): R {
@@ -60,7 +61,7 @@ sealed class Expr {
     }
   }
 
-  data class Literal(
+  class Literal(
     val value: Any?,
   ) : Expr() {
     override fun <R> accept(visitor: Visitor<R>): R {
@@ -68,7 +69,7 @@ sealed class Expr {
     }
   }
 
-  data class Logical(
+  class Logical(
     val left: Expr,
     val operator: Token,
     val right: Expr,
@@ -78,7 +79,7 @@ sealed class Expr {
     }
   }
 
-  data class Set(
+  class Set(
     val destination: Expr,
     val name: Token,
     val value: Expr,
@@ -88,7 +89,15 @@ sealed class Expr {
     }
   }
 
-  data class Unary(
+  class This(
+    val keyword: Token,
+  ) : Expr() {
+    override fun <R> accept(visitor: Visitor<R>): R {
+      return visitor.visitThisExpr(this)
+    }
+  }
+
+  class Unary(
     val operator: Token,
     val right: Expr,
   ) : Expr() {
@@ -97,7 +106,7 @@ sealed class Expr {
     }
   }
 
-  data class Variable(
+  class Variable(
     val name: Token,
   ) : Expr() {
     override fun <R> accept(visitor: Visitor<R>): R {

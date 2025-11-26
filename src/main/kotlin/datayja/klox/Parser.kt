@@ -364,6 +364,8 @@ class Parser(
 
             match(TokenType.NUMBER, TokenType.STRING) -> Expr.Literal(previous().literal)
 
+            match(TokenType.THIS) -> Expr.This(previous())
+
             match(TokenType.IDENTIFIER) -> Expr.Variable(previous())
 
             match(TokenType.LEFT_PAREN) -> {

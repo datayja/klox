@@ -76,6 +76,10 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         return value
     }
 
+    override fun visitThisExpr(expr: Expr.This): Any? {
+        return lookUpVariable(expr.keyword, expr)
+    }
+
     override fun visitGroupingExpr(expr: Expr.Grouping): Any? {
         return evaluate(expr.expression)
     }
@@ -120,7 +124,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     fun resolve(expr: Expr, depth: Int) {
-        locals.put(expr, depth)
+        locals[expr] = depth
     }
 
     override fun visitBlockStmt(stmt: Stmt.Block) {
@@ -129,7 +133,15 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     override fun visitClassStmt(stmt: Stmt.Class) {
         environment.define(stmt.name.lexeme, null)
-        val kloxClass = KloxClass(stmt.name.lexeme)
+
+        val methods = buildMap {
+            for (method in stmt.methods) {
+                val function = KloxFunction(declaration = method, closure = environment, isInitializer = method.name.lexeme == "init")
+                put(method.name.lexeme, function)
+            }
+        }
+
+        val kloxClass = KloxClass(stmt.name.lexeme, methods)
         environment.assign(stmt.name, kloxClass)
     }
 
@@ -280,7 +292,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitFunctionStmt(stmt: Stmt.Function) {
-        val function = KloxFunction(declaration = stmt, closure = environment)
+        val function = KloxFunction(declaration = stmt, closure = environment, isInitializer = false)
         environment.define(stmt.name.lexeme, function)
     }
 

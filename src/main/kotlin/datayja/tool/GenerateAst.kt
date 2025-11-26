@@ -21,6 +21,7 @@ fun main(args: Array<String>) {
         "Literal  : Any? value",
         "Logical  : Expr left, Token operator, Expr right",
         "Set      : Expr destination, Token name, Expr value",
+        "This     : Token keyword",
         "Unary    : Token operator, Expr right",
         "Variable : Token name",
     ))
@@ -91,7 +92,7 @@ private fun defineType(
     className: String,
     fieldList: String,
 ) {
-    writer.println("  data class $className(")
+    writer.println("  class $className(")
 
     // constructor fields
     val fields = fieldList.split(", ")
