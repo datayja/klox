@@ -1,7 +1,7 @@
 package datayja.klox
 
-class KloxInstance(
-    val kloxClass: KloxClass,
+open class KloxInstance(
+    var kloxClass: KloxClass?,
 ) {
 
     private val fields: MutableMap<String, Any?> = mutableMapOf()
@@ -11,11 +11,11 @@ class KloxInstance(
             fields.containsKey(name.lexeme) -> {
                 fields[name.lexeme]
             }
-            kloxClass.hasMethod(name.lexeme) -> {
-                kloxClass.findMethod(name.lexeme)!!.bind(this)
+            kloxClass?.hasMethod(name.lexeme) == true -> {
+                kloxClass!!.findMethod(name.lexeme)!!.bind(this)
             }
             else -> {
-                throw RuntimeError(name, "Undefined property '$kloxClass.${name.lexeme}'.")
+                throw RuntimeError(name, "Undefined property '${displayClassName()}.${name.lexeme}'.")
             }
         }
     }
@@ -25,6 +25,10 @@ class KloxInstance(
     }
 
     override fun toString(): String {
-        return "$kloxClass instance ${Integer.toHexString(System.identityHashCode(this))}"
+        return "${displayClassName()} instance ${Integer.toHexString(System.identityHashCode(this))}"
+    }
+
+    private fun displayClassName(): String {
+        return kloxClass?.toString() ?: "KloxMetaclass"
     }
 }

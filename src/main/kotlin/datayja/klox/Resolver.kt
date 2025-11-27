@@ -111,6 +111,17 @@ class Resolver(
             resolveFunction(method, declaration)
         }
 
+        for (method in stmt.classMethods) {
+            var declaration = FunctionType.Method
+            if (method.name.lexeme == "init") {
+                declaration = FunctionType.Initializer
+                if (method.params.isNotEmpty()) {
+                    Klox.error(method.name, "Class.init can't have any parameters.")
+                }
+            }
+            resolveFunction(method, declaration)
+        }
+
         endScope()
 
         currentClass = enclosingClass

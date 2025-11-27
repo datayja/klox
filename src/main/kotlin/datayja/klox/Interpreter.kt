@@ -140,8 +140,15 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
                 put(method.name.lexeme, function)
             }
         }
+        val classMethods = buildMap {
+            for (method in stmt.classMethods) {
+                val function = KloxFunction(declaration = method, closure = environment, isInitializer = method.name.lexeme == "init")
+                put(method.name.lexeme, function)
+            }
+        }
 
-        val kloxClass = KloxClass(stmt.name.lexeme, methods)
+        val kloxMetaclass = KloxMetaclass(stmt.name.lexeme, methods, classMethods)
+        val kloxClass = kloxMetaclass.call(this, emptyList())
         environment.assign(stmt.name, kloxClass)
     }
 

@@ -2,15 +2,15 @@ package datayja.klox
 
 // TODO: make KloxClass extend KloxInstance, add support for class methods and static variables
 
-class KloxClass(
+open class KloxClass(
     val name: String,
     val methods: Map<String, KloxFunction>,
-) : KloxCallable {
+) : KloxInstance(null), KloxCallable {
 
     override fun call(
         interpreter: Interpreter,
         arguments: List<Any?>
-    ): Any {
+    ): KloxInstance {
         val instance = KloxInstance(this)
 
         findMethod("init")

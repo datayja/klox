@@ -25,6 +25,7 @@ sealed class Stmt {
   class Class(
     val name: Token,
     val methods: List<Stmt.Function>,
+    val classMethods: List<Stmt.Function>,
   ) : Stmt() {
     override fun <R> accept(visitor: Visitor<R>): R {
       return visitor.visitClassStmt(this)

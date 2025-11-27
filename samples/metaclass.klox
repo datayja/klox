@@ -1,0 +1,22 @@
+class Math {
+  class init() {
+    this.defaultGreeting = "Hello, lox!";
+  }
+
+  class square(n) {
+    return n * n;
+  }
+
+  class greet(whom) {
+    if (whom != nil) {
+      print "Hello, " + whom + "!";
+    } else {
+      print this.defaultGreeting;
+    }
+  }
+}
+
+print Math.square(3);
+
+Math.greet(nil);
+Math.greet("handsome");
