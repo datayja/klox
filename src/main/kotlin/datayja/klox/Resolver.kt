@@ -100,6 +100,14 @@ class Resolver(
         declare(stmt.name)
         define(stmt.name)
 
+        if (stmt.superclass != null) {
+            if (stmt.name.lexeme == stmt.superclass.name.lexeme) {
+                Klox.error(stmt.superclass.name, "A class can't inherit from itself.")
+            }
+
+            resolve(stmt.superclass)
+        }
+
         beginScope()
         scopes.peek()["this"] = true
 

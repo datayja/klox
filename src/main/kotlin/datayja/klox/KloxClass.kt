@@ -4,6 +4,7 @@ package datayja.klox
 
 open class KloxClass(
     val name: String,
+    val superclass: KloxClass?,
     val methods: Map<String, KloxFunction>,
 ) : KloxInstance(null), KloxCallable {
 
@@ -27,9 +28,18 @@ open class KloxClass(
                 ?: 0
         }
 
-    fun hasMethod(name: String): Boolean = methods.containsKey(name)
+    fun hasMethod(name: String): Boolean {
+        return methods.containsKey(name) ||
+                (superclass?.hasMethod(name) == true)
+    }
 
-    fun findMethod(name: String): KloxFunction? = methods[name]
+    fun findMethod(name: String): KloxFunction? {
+        return if (methods.containsKey(name)) {
+            methods[name]
+        } else {
+            superclass?.findMethod(name)
+        }
+    }
 
     override fun toString(): String = name
 }

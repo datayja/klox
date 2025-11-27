@@ -132,6 +132,18 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitClassStmt(stmt: Stmt.Class) {
+        val superclass: KloxClass? = if (stmt.superclass != null) {
+            evaluate(stmt.superclass)
+                .also { sc ->
+                    if (sc !is KloxClass) {
+                        throw RuntimeError(stmt.superclass.name, "Superclass must be a class.")
+                    }
+                }
+                .let { it as KloxClass }
+        } else {
+            null
+        }
+
         environment.define(stmt.name.lexeme, null)
 
         val methods = buildMap {
@@ -147,7 +159,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
             }
         }
 
-        val kloxMetaclass = KloxMetaclass(stmt.name.lexeme, methods, classMethods)
+        val kloxMetaclass = KloxMetaclass(stmt.name.lexeme, superclass, methods, classMethods)
         val kloxClass = kloxMetaclass.call(this, emptyList())
         environment.assign(stmt.name, kloxClass)
     }
