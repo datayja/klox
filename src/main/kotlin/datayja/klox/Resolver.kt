@@ -15,7 +15,7 @@ class Resolver(
     }
 
     private enum class ClassType {
-        None, Class
+        None, Class, Subclass
     }
 
     private val scopes: Stack<MutableMap<String, Boolean>> = Stack()
@@ -66,6 +66,16 @@ class Resolver(
         resolve(expr.destination)
     }
 
+    override fun visitSuperExpr(expr: Expr.Super) {
+        if (currentClass == ClassType.None) {
+            Klox.error(expr.keyword, "Can't use 'super' outside of a class.")
+        } else if (currentClass != ClassType.Subclass) {
+            Klox.error(expr.keyword, "Can't use 'super' in a class with no superclass.")
+        }
+
+        resolveLocal(expr, expr.keyword)
+    }
+
     override fun visitThisExpr(expr: Expr.This) {
         if (currentClass == ClassType.None) {
             Klox.error(expr.keyword, "Can't use 'this' outside of a class.")
@@ -105,7 +115,11 @@ class Resolver(
                 Klox.error(stmt.superclass.name, "A class can't inherit from itself.")
             }
 
+            currentClass = ClassType.Subclass
             resolve(stmt.superclass)
+
+            beginScope()
+            scopes.peek()["super"] = true
         }
 
         beginScope()
@@ -131,6 +145,10 @@ class Resolver(
         }
 
         endScope()
+
+        if (stmt.superclass != null) {
+            endScope()
+        }
 
         currentClass = enclosingClass
     }

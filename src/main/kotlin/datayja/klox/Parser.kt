@@ -377,6 +377,13 @@ class Parser(
 
             match(TokenType.NUMBER, TokenType.STRING) -> Expr.Literal(previous().literal)
 
+            match(TokenType.SUPER) -> {
+                val keyword = previous()
+                consume(TokenType.DOT, "Expect '.' after 'super'.")
+                val method = consume(TokenType.IDENTIFIER, "Expect superclass method name.")
+                Expr.Super(keyword, method)
+            }
+
             match(TokenType.THIS) -> Expr.This(previous())
 
             match(TokenType.IDENTIFIER) -> Expr.Variable(previous())
