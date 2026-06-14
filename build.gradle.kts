@@ -20,6 +20,17 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
+
 kotlin {
     jvmToolchain(24)
+}
+
+afterEvaluate {
+    project.tasks.register("runMain", JavaExec::class) {
+        classpath = project.sourceSets["main"].runtimeClasspath
+        mainClass = "datayja.klox.KloxKt"
+
+        standardInput = System.`in`
+        standardOutput = System.`out`
+    }
 }
